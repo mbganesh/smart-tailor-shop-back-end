@@ -230,6 +230,7 @@ router.post('/register', async (req, res) => {
         requestData['dbName'] = dbName
         requestData['color'] = randomColor({ luminosity: 'dark', hue: 'random' })
         requestData['planExpiryDate'] = planExpiryDate
+        requestData['suspendUser'] = false
 
         let obj = await createCustomDB(dbName, requestData)
         console.log(obj);

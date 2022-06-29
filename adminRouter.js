@@ -46,7 +46,6 @@ router.post("/getAllDataBase", async (req, res) => {
         });
 
         for (let i = 0; i < allDatabases.length; i++) {
-          // console.log(allDatabases[i].split('SmartTailorShopDB'));
           if (allDatabases[i].split("SmartTailorShopDB").length === 2) {
             allDBNames.push(
               allDatabases[i].split("SmartTailorShopDB")[0] +
@@ -57,14 +56,11 @@ router.post("/getAllDataBase", async (req, res) => {
 
         for (let i = 0; i < allDBNames.length; i++) {
           let url = "mongodb://localhost/" + allDBNames[i];
-          //   console.log(url);
-          //   console.log(connection.models);
           connection.close();
           const db = await mongoose.connect(url);
-          const omit = { emailId: 1, _id: 0, name: 1 };
+          const omit = { emailId: 1, _id: 0, name: 1, planExpiryDate: 1,suspendUser:1 };
           let foundData = await registerSchema.findOne({}, omit);
           dataToRes.push(foundData);
-          //   console.log(dataToRes);
           db.disconnect();
         }
 
@@ -84,14 +80,14 @@ router.post("/getAllDataBase", async (req, res) => {
 
         var tempStore = [];
 
-        for (let i = startPos; i <= lastPos; i++) {
-          console.log(i);
-          if (dataToRes[i] !== null) {
-            tempStore.push(dataToRes[i]);
+        for (let i = startPos; i < lastPos; i++) {
+          if (dataToRes[i] === undefined || dataToRes[i] === null) {
+            continue;
           }
-          break
-         
+          tempStore.push(dataToRes[i]);
         }
+
+        console.log(`Response Data Count -> ${tempStore.length}`);
 
         // var allStudentData = await studentModal
         // .find(searchFilter, { _id: 0, __v: 0 })
@@ -99,11 +95,12 @@ router.post("/getAllDataBase", async (req, res) => {
         // .limit(size)
         // .lean();
 
+        console.log(requestData);
+
         return res.json({
           success: true,
-          data: dataToRes,
-          tempStore,
-          count: allDatabases.length,
+          data: tempStore,
+          count: allDBNames.length,
         });
       });
     });
@@ -115,10 +112,8 @@ router.post("/getAllDataBase", async (req, res) => {
 
 router.post("/deleteDB", async (req, res) => {
   mongoose.disconnect();
-  var requestData = req.body.username.split("@")[0];
-  let dbName = requestData.split("@")[0];
+  var dbName = req.body.username.split("@")[0];
   const url = `mongodb://localhost/${dbName}SmartTailorShopDB`;
-  console.log(requestData);
   await mongoose.connect(url);
 
   const connection = mongoose.connection;
@@ -138,6 +133,63 @@ router.post("/deleteDB", async (req, res) => {
       return res.json({ success: true, message: "Unable to Delete databse" });
     }
   });
+});
+
+router.post("/updateExpiryDate", async (req, res) => {
+  try {
+    mongoose.disconnect();
+    var requestData = req.body;
+    let dbName = requestData.username.split("@")[0];
+    const url = `mongodb://localhost/${dbName}SmartTailorShopDB`;
+    await mongoose.connect(url);
+    const connection = mongoose.connection;
+    connection.once("open", () => {
+      console.log("MongoDB database connection established successfully");
+    });
+    console.log(requestData);
+    await registerSchema.findOneAndUpdate(
+      { emailId: requestData.username },
+      { planExpiryDate: requestData.planExpiryDate }
+    );
+    return res.json({ success: true, message: "Expiry Date Updated" });
+  } catch (error) {
+    console.log(error)
+    return res.json({ success: false, message: "Invalid Date and Time Format." });
+  }
+});
+
+router.post("/suspendUser", async (req, res) => {
+  try {
+    mongoose.disconnect();
+    var requestData = req.body;
+
+    let dbName = requestData.username.split("@")[0];
+    const url = `mongodb://localhost/${dbName}SmartTailorShopDB`;
+    console.log(requestData);
+    await mongoose.connect(url);
+
+    const connection = mongoose.connection;
+    connection.once("open", () => {
+      console.log("MongoDB database connection established successfully");
+    });
+
+    console.log(requestData);
+
+    await registerSchema.findOneAndUpdate(
+      { emailId: requestData.username },
+      { suspendUser: requestData.suspendUser }
+    );
+
+    if(requestData.suspendUser){  // if true as res
+      return res.json({ success: true, message: "User Suspended" });
+    }else{
+      return res.json({ success: true, message: "Suspend Removed" });
+    }
+
+    
+  } catch (error) {
+    return res.json({ success: false, message: "Unable to Update." });
+  }
 });
 
 export default router;

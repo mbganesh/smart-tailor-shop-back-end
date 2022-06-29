@@ -11,7 +11,8 @@ const registerSchema = new mongoose.Schema({
     shopAddress:String,
     color:String,
     dbName:String,
-    planExpiryDate:Date
+    planExpiryDate:Date,
+    suspendUser:Boolean
 });
 const registrationDetails = mongoose.model("registrationDetails", registerSchema);
 
