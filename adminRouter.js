@@ -58,7 +58,7 @@ router.post("/getAllDataBase", async (req, res) => {
           let url = "mongodb://localhost/" + allDBNames[i];
           connection.close();
           const db = await mongoose.connect(url);
-          const omit = { emailId: 1, _id: 0, name: 1, planExpiryDate: 1,suspendUser:1 };
+          const omit = { emailId: 1, _id: 0, name: 1, planExpiryDate: 1,suspendUser:1,plan:1 };
           let foundData = await registerSchema.findOne({}, omit);
           dataToRes.push(foundData);
           db.disconnect();
@@ -188,10 +188,38 @@ router.post("/suspendUser", async (req, res) => {
 
     
   } catch (error) {
+    console.log(error);
     return res.json({ success: false, message: "Unable to Update." });
   }
 });
 
+router.post("/updatePlan", async (req, res) => {
+  try {
+    mongoose.disconnect();
+    var requestData = req.body;
+
+    let dbName = requestData.username.split("@")[0];
+    const url = `mongodb://localhost/${dbName}SmartTailorShopDB`;
+    console.log(requestData);
+    await mongoose.connect(url);
+
+    const connection = mongoose.connection;
+    connection.once("open", () => {
+      console.log("MongoDB database connection established successfully");
+    });
+    console.log(requestData);
+    await registerSchema.findOneAndUpdate(
+      { emailId: requestData.username },
+      { plan: requestData.plan }
+    );
+
+    return res.json({ success: true, message: "Plan has been updated" });
+    
+  } catch (error) {
+    console.log(error);
+    return res.json({ success: false, message: "Unable to Update." });
+  }
+});
 export default router;
 
 /**

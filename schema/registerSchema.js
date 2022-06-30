@@ -12,7 +12,8 @@ const registerSchema = new mongoose.Schema({
     color:String,
     dbName:String,
     planExpiryDate:Date,
-    suspendUser:Boolean
+    suspendUser:Boolean,
+    plan:String
 });
 const registrationDetails = mongoose.model("registrationDetails", registerSchema);
 
